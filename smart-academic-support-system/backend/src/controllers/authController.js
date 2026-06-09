@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import { isProductionRuntime } from "../config/env.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { signToken } from "../utils/token.js";
 
@@ -59,6 +60,12 @@ export const updateProfile = asyncHandler(async (req, res) => {
 });
 
 export const resetPassword = asyncHandler(async (req, res) => {
+  if (isProductionRuntime()) {
+    return res.status(503).json({
+      message: "Password reset is unavailable. Contact an administrator for account recovery."
+    });
+  }
+
   const { email, studentId, newPassword } = req.body;
   if (!email || !studentId || !newPassword) {
     return res.status(400).json({ message: "Email, Student ID, and new password are required" });

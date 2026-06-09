@@ -12,6 +12,7 @@ A full-stack academic support platform for students and library administrators. 
 - [Environment Variables](#environment-variables)
 - [Demo Credentials](#demo-credentials)
 - [Available Scripts](#available-scripts)
+- [Deployment](#deployment)
 - [API Overview](#api-overview)
 - [AI Support](#ai-support)
 - [Troubleshooting](#troubleshooting)
@@ -249,6 +250,65 @@ npm run dev      # Start Vite development server
 npm run build    # Create production build
 npm run preview  # Preview production build locally
 ```
+
+## Deployment
+
+The repository is configured for a Vercel frontend, a Render backend, and a hosted MongoDB database such as MongoDB Atlas.
+
+Deploy the backend first because its Render URL is required when building the frontend.
+
+### Backend on Render
+
+Use the included `render.yaml` Blueprint, or create a Render Web Service with these settings:
+
+- Root directory: `smart-academic-support-system/backend`
+- Build command: `npm ci --omit=dev`
+- Start command: `npm start`
+- Health check path: `/health`
+- Runtime: Node.js 18 or later
+
+Set these Render environment variables:
+
+```txt
+NODE_ENV=production
+MONGO_URI=<hosted MongoDB connection string>
+JWT_SECRET=<unique random secret of at least 32 characters>
+JWT_EXPIRES_IN=7d
+CLIENT_URL=https://<vercel-frontend-domain>
+```
+
+`CLIENT_URL` may contain comma-separated frontend origins. Add optional AI provider variables only when needed.
+
+After deployment, verify:
+
+```txt
+https://<render-backend-domain>/health
+https://<render-backend-domain>/api
+```
+
+### Frontend on Vercel
+
+Create a separate Vercel project from the same repository with these settings:
+
+- Root directory: `smart-academic-support-system/frontend`
+- Framework preset: Vite
+- Build command: `npm run build`
+- Output directory: `dist`
+- Runtime: Node.js 18 or later
+
+Set this Vercel build-time environment variable:
+
+```txt
+VITE_API_URL=https://<render-backend-domain>/api
+```
+
+The included `frontend/vercel.json` configures SPA route fallback. Production builds reject missing, local, non-HTTPS, or incorrectly based API URLs.
+
+After Vercel assigns the frontend domain, update `CLIENT_URL` in Render and restart the backend service. Add Vercel preview domains to the comma-separated `CLIENT_URL` value only if those previews should access the production backend.
+
+Do not run `npm run seed` automatically on every deploy because it resets demo data. Run it manually once only if the deployed database should contain the demo accounts and sample content.
+
+The demo-only email and Student ID password reset flow is disabled in deployed production runtimes. Add a verified email/token reset flow before enabling self-service password recovery for real users.
 
 ## API Overview
 
